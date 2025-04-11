@@ -43,6 +43,8 @@ def plot_manhattan(df, n):
     plt.show()
 
 def plot_bootstrap_mean_with_CI(df_results):
+    plt.rcParams['font.family'] = 'Arial'
+
     sns.set_theme(style="ticks")
     f, ax = plt.subplots(figsize=(10, 8))
 
@@ -56,14 +58,20 @@ def plot_bootstrap_mean_with_CI(df_results):
     )
 
     ax.set_xticks(df_results['n'])
-    ax.xaxis.grid(True)
-    ax.set(ylabel="Signal-to-Noise Ratio")
-    sns.despine(trim=True, left=True)
-    plt.title("Bootstrap Mean & Confidence Interval")
+    sns.despine(top=True, right=True, left=False, bottom=False)
     plt.legend()
+
+    plt.xticks(fontsize=14)
+    plt.yticks(fontsize=14)
+
+    plt.xlabel("Windows size (width*2 + 1)", fontsize=14, labelpad=17)
+    plt.ylabel("Signal-to-Noise Ratio", fontsize=14)
+
     plt.show()
 
 def plot_bootstrap_violon(df):
+    plt.rcParams['font.family'] = 'Arial'
+
     violin_df = df.explode('signal_noise_bootstraps').rename(columns={'signal_noise_bootstraps': 'signal_noise'})
 
     sns.set_theme(style="ticks")
@@ -71,10 +79,13 @@ def plot_bootstrap_violon(df):
 
     sns.violinplot(x="n", y="signal_noise", data=violin_df, width=0.8, palette="viridis", inner="quartile")
 
-    ax.xaxis.grid(True)
-    ax.set(ylabel="Signal-to-Noise Ratio")
-    sns.despine(trim=True, left=True)
-    plt.title("Distribution of Signal-to-Noise Ratio (Bootstrapped)")
+    sns.despine(top=True, right=True, left=False, bottom=False)
+
+    plt.xlabel("Windows size (width*2 + 1)", fontsize=14, labelpad=17)
+    plt.ylabel("Signal-to-Noise Ratio", fontsize=14)
+    plt.xticks(fontsize=14)
+    plt.yticks(fontsize=14)
+
 
     plt.show()
 

@@ -21,7 +21,6 @@ def bootstrap_distribution(df):
     return pd.DataFrame(results)
 
 def bootstrap_mean_with_CI(df, gene, target_method):
-
     results = []
     smoothed_versions = {
         n: mean_smoothing(df[['Gene Name', 'T_log10_P']].copy(), n)
@@ -40,7 +39,7 @@ def bootstrap_mean_with_CI(df, gene, target_method):
 
     return pd.DataFrame(results)
 
-def bootstrap_with_confidence(df, gene, target_method, noise_percentage=0.10, n_bootstrap=1000):
+def bootstrap_with_confidence(df, gene, target_method, noise_percentage=0.10, n_bootstrap=30):
 
     bootstrap_samples = [
         signal_noise_bootstrap_gene(df, gene, target_method, noise_percentage) for _ in range(n_bootstrap)

@@ -8,6 +8,8 @@ from Smoothing import savgol_smoothing
 
 
 def savgol_looker(df_merged):
+    plt.rcParams['font.family'] = 'Arial'
+
     results = []
 
     for n in range(3, 101, 2):
@@ -18,23 +20,32 @@ def savgol_looker(df_merged):
 
     df_results = pd.DataFrame(results)
 
-    plt.figure(figsize=(12, 8))
-
+    plt.figure(figsize=(12, 6))
     for order_val in df_results['order'].unique():
         subset = df_results[df_results['order'] == order_val]
         sns.lineplot(x='n', y='signal_noise', data=subset, label=f'order={order_val}', marker='o')
 
-    plt.title("Signal-to-Noise Ratio vs. Window Size (n) for Different Orders")
-    plt.xlabel("Window Size (n)")
-    plt.ylabel("Signal-to-Noise Ratio")
-    plt.legend(title="Order")
+    plt.xlabel("Windows size (width*2 + 1)", fontsize=14, labelpad=17)
+    plt.ylabel("Signal-to-Noise Ratio", fontsize=14)
+    plt.xticks(fontsize=12)
+    plt.yticks(fontsize=14)
 
-    odd_ticks = np.arange(min(df_results['n']), max(df_results['n']) + 1, 2)  # Nombres impairs
+    plt.legend(
+        title="Order",
+        bbox_to_anchor=(1, 0.90),
+        loc='upper left',
+        borderaxespad=0.
+    )
+
+    sns.despine(top=True, right=True)
+
+    odd_ticks = np.arange(min(df_results['n']), max(df_results['n']) + 1, 2)
     plt.xticks(odd_ticks)
-    plt.grid(axis='x', which='major')
-    plt.grid(axis='y')
+
+    plt.tight_layout()
 
     plt.show()
+
 
 def chromosome_sort(chrom):
     if chrom.isdigit():
