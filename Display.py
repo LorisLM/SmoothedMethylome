@@ -6,16 +6,7 @@ from Utils import chromosome_sort
 
 
 def plot_manhattan(df):
-    """
-    Generates a Manhattan plot from a DataFrame.
-
-    The input DataFrame should contain at least three columns:
-    - 'Chromosome': Indicates the chromosome for each point (can be numeric or string type).
-    - 'Position': Indicates the genomic position of each point (must be numeric type).
-    - 'T_log10_P_smoothed': Indicates the statistical significance of each point.
-
-    The plot displays -log10(p-value) against the genomic position,
-    with alternating colors for chromosomes to aid visualization.
+    """Generates a Manhattan plot from a DataFrame.
 
     Args:
         df (pd.DataFrame): DataFrame containing the genomic data.
@@ -205,13 +196,11 @@ def plot_manhattan2(df, snr_filtered):
         label="Noise"
     )
 
-    # Points à fort SNR (colorés) avec légende et positions
     high_snr_df = df.loc[df["is_high_snr"]].copy()
     gene_series = high_snr_df["Gene Name"].astype(str)
     unique_genes = sorted(gene_series[gene_series != 'nan'].unique().tolist())
     all_genes_label = ", ".join(unique_genes)
 
-    # Calculer la première et la dernière position du signal
     if not high_snr_df.empty:
         first_pos = high_snr_df["Position"].min()
         last_pos = high_snr_df["Position"].max()

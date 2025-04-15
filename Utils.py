@@ -3,7 +3,7 @@ import pandas as pd
 from matplotlib import pyplot as plt
 import seaborn as sns
 
-from SNR_tools import signal_noise_gene
+from SNR_tools import signal_noise_for_gene
 from Smoothing import savgol_smoothing
 
 
@@ -15,7 +15,7 @@ def savgol_looker(df_merged):
     for n in range(3, 101, 2):
         for order in range(1, min(n, 10)):
             savgol_smoothing(df_merged, n, order)
-            signal_noise_ratio = signal_noise_gene(df_merged, 'MMACHC', 'T_log10_P_smoothed')
+            signal_noise_ratio = signal_noise_for_gene(df_merged, 'MMACHC', 'smooth_result')
             results.append({'n': n, 'order': order, 'signal_noise': signal_noise_ratio})
 
     df_results = pd.DataFrame(results)
