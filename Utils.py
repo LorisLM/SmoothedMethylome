@@ -47,6 +47,29 @@ def savgol_looker(df_merged):
     plt.show()
 
 
+def evaluate_performance(df, target_column, smoothed_column, k_params):
+    y_true = df[target_column].values
+    y_pred = df[smoothed_column].values
+    n = len(y_true)
+
+    residuals = y_true - y_pred
+    mse = np.mean(residuals ** 2)
+
+    sigma2 = mse
+    log_likelihood = -0.5 * n * (np.log(2 * np.pi * sigma2) + 1)
+    log_mse = np.log(mse)
+
+    aic = n * log_mse + 2 * k_params
+    bic = n * log_mse + k_params * np.log(n)
+
+    return {
+        'MSE': mse,
+        'AIC': aic,
+        'BIC': bic,
+        'length': n,
+        'k_params': k_params
+    }
+
 def chromosome_sort(chrom):
     if chrom.isdigit():
         return int(chrom)

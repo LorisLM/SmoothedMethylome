@@ -7,4 +7,5 @@ def mean_smoothing(df, target_column, n):
 
 def savgol_smoothing(df, target_column, n, order):
     df['smooth_result'] = savgol_filter(df[target_column], n, order)
+    df["smooth_result"] = df["smooth_result"].clip(lower=0)
     return df
