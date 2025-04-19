@@ -2,10 +2,13 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
+from matplotlib import cm
+
 from Utils import chromosome_sort
+from sklearn.cluster import DBSCAN
 
 
-def plot_manhattan(df):
+def plot_manhattan(df, smooth_column):
     """Generates a Manhattan plot from a DataFrame.
 
     Args:
@@ -37,7 +40,7 @@ def plot_manhattan(df):
     df["Color"] = df["Chromosome"].map(chrom_color_map)
 
     plt.figure(figsize=(14, 6))
-    plt.scatter(df["Pos_cum"], df["T_log10_P_smoothed"], c=df["Color"], edgecolor=df["Color"], alpha=0.5)
+    plt.scatter(df["Pos_cum"], df[smooth_column], c=df["Color"], edgecolor=df["Color"], alpha=0.5)
 
     for chrom in chrom_offsets.values():
         plt.axvline(x=chrom, color='grey', linestyle='--', alpha=0.5)
@@ -134,20 +137,8 @@ def plot_manhattan2(df, snr_filtered):
     """
     Generates a modified Manhattan plot highlighting points based on SNR.
 
-    The input DataFrame 'df' should contain the following columns:
-    - 'Chromosome' (str): The chromosome for each point.
-    - 'Position' (int): The genomic position of each point.
-    - 'T_log10_P_smoothed' (float): The smoothed -log10(p-value) for each point.
-    - 'Predictor' (any): A predictor identifier for each point.
-    - 'Gene Name' (str, optional): The name of the gene associated with the point.
-
     The 'snr_filtered' DataFrame should contain a 'Predictor' column with the identifiers
     of the points that should be highlighted (e.g., those with high Signal-to-Noise Ratio).
-
-    The plot displays -log10(p-value) against the genomic position, with alternating
-    colors for all points and a specific color (crimson) for the points whose 'Predictor'
-    is present in the 'snr_filtered' DataFrame. It also labels these highlighted
-    points with their associated gene names.
 
     Args:
         df (pd.DataFrame): DataFrame containing the genomic data.
@@ -182,7 +173,6 @@ def plot_manhattan2(df, snr_filtered):
 
     df["Pos_cum"] = df.apply(lambda row: row["Position"] + chrom_offsets[row["Chromosome"]], axis=1)
 
-    # Marquer les points à colorier
     df["is_high_snr"] = df["Predictor"].isin(snr_filtered["Predictor"])
 
     plt.figure(figsize=(14, 6))
@@ -190,7 +180,7 @@ def plot_manhattan2(df, snr_filtered):
     # Points normaux (gris)
     plt.scatter(
         df.loc[~df["is_high_snr"], "Pos_cum"],
-        df.loc[~df["is_high_snr"], "T_log10_P_smoothed"],
+        df.loc[~df["is_high_snr"], "smooth_result"],
         color="lightgray",
         alpha=0.5,
         label="Noise"
@@ -210,7 +200,7 @@ def plot_manhattan2(df, snr_filtered):
 
     plt.scatter(
         high_snr_df["Pos_cum"],
-        high_snr_df["T_log10_P_smoothed"],
+        high_snr_df["smooth_result"],
         color="crimson",
         alpha=0.9,
         label=f"{all_genes_label}{position_label}"
@@ -228,6 +218,7 @@ def plot_manhattan2(df, snr_filtered):
     plt.xticks(list(chrom_ticks.keys()), list(chrom_ticks.values()), fontsize=17)
 
 
+
     plt.xlabel("Chromosomes", fontsize=19, labelpad=17)
     plt.ylabel("-log10(p-value)", fontsize=19)
     sns.despine(top=True, right=True)
@@ -241,5 +232,69 @@ def plot_manhattan2(df, snr_filtered):
 
     plt.tight_layout()
     plt.show()
+
+
+def plot_volcano(
+    stats: pd.DataFrame,
+    *,
+    effect_col: str = "delta",
+    p_col: str = "pvalue",
+    effect_thresh: float | None = None,
+    p_thresh: float | None = None,
+    title: str | None = None,
+    ax: plt.Axes | None = None,
+    out_file: str | None = None,
+    show: bool = True,
+) -> plt.Axes:
+    """Create a volcano plot (|effect| vs –log10 p).
+
+    Parameters
+    ----------
+    stats
+        DataFrame returned by `compute_group_stats`.
+    effect_col, p_col
+        Column names for the effect size (delta) and p‑value.
+    effect_thresh, p_thresh
+        Optional thresholds drawn as vertical / horizontal lines.
+    title
+        Title of the plot.
+    ax
+        Matplotlib axes; created if *None*.
+    out_file
+        If given, saves the figure (PNG, PDF…).
+    show
+        Call ``plt.show()`` (ignored if running in a non‑interactive backend).
+    """
+    if ax is None:
+        fig, ax = plt.subplots(figsize=(6, 6))
+    else:
+        fig = ax.figure
+
+    x = stats[effect_col].astype(float)
+    p = stats[p_col].astype(float)
+    y = -np.log10(p)
+
+    ax.scatter(x, y, s=8, alpha=0.6)
+
+    if effect_thresh is not None:
+        ax.axvline(effect_thresh, linestyle="--", linewidth=1)
+        ax.axvline(-effect_thresh, linestyle="--", linewidth=1)
+    if p_thresh is not None:
+        ax.axhline(-np.log10(p_thresh), linestyle="--", linewidth=1)
+
+    ax.set_xlabel(effect_col)
+    ax.set_ylabel("-log10 p-value")
+    if title:
+        ax.set_title(title)
+    ax.grid(True, linestyle=":", linewidth=0.5)
+
+    if out_file:
+        fig.savefig(out_file, bbox_inches="tight")
+
+    if show:
+        plt.show()
+
+    return ax
+
 
 

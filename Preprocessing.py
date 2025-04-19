@@ -10,3 +10,4 @@ def merge(df1, df2):
     df_merged = pd.merge(df1, df2, on='Predictor', how='left')
 
     return df_merged
+

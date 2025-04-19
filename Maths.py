@@ -3,7 +3,8 @@ import pandas as pd
 
 from SNR_tools import signal_noise_for_gene
 from Smoothing import mean_smoothing, savgol_smoothing
-
+from scipy.stats import ttest_ind
+from statsmodels.stats.multitest import multipletests
 
 def bootstrap_distribution(df, gene, smooth_column, windows_size=20, n_iterations=1000):
     results = []
@@ -76,3 +77,65 @@ def bootstrap_with_confidence(df, gene, smooth_column, noise_percentage=0.10, n_
     conf_interval = np.percentile(bootstrap_samples, [2.5, 97.5])
 
     return mean_value, conf_interval
+
+def run_methylation_ttest(
+    df1: pd.DataFrame,
+    df2: pd.DataFrame,
+    *,
+    name1: str = "group1",
+    name2: str = "group2",
+    min_n: int = 2,
+    progress: bool = True,
+) -> pd.DataFrame:
+    common = df1.index.intersection(df2.index)
+    g1 = df1.loc[common]
+    g2 = df2.loc[common]
+
+    mean1 = g1.mean(axis=1, skipna=True)
+    mean2 = g2.mean(axis=1, skipna=True)
+    delta = mean2 - mean1
+
+    iterator = common
+    bar_close = lambda: None  # default no‑op
+    try:
+        from tqdm import tqdm  # type: ignore
+        iterator = tqdm(common, desc="run_methylation_ttest", unit="CpG")
+        bar_close = iterator.close
+    except ModuleNotFoundError:
+        print("[run_methylation_ttest] tqdm not installed; fallback to simple progress.")
+        progress = "simple"
+        step = max(len(common) // 10, 1)
+
+    pvals: list[float] = []
+    for i, idx in enumerate(iterator):
+        v1 = g1.loc[idx].dropna().values
+        v2 = g2.loc[idx].dropna().values
+        if len(v1) < min_n or len(v2) < min_n:
+            pvals.append(np.nan)
+        else:
+            _, p = ttest_ind(v1, v2, equal_var=False, nan_policy="omit")
+            pvals.append(p)
+
+        if progress == "simple" and (i + 1) % step == 0:
+            print(f"  processed {i + 1}/{len(common)} CpGs…", end="\r")
+
+    bar_close()
+
+    if progress == "simple":
+        print()  # newline after last carriage return
+
+    out = pd.DataFrame({
+        f"{name1}_mean": mean1,
+        f"{name2}_mean": mean2,
+        "delta": delta,
+        "pvalue": pvals,
+    })
+
+    p_array = np.asarray(pvals, dtype=float)
+    nan_mask = np.isnan(p_array)
+    p_filled = np.where(nan_mask, 1.0, p_array)
+    qvals = multipletests(p_filled, method="fdr_bh")[1]
+    qvals[nan_mask] = np.nan
+    out["qvalue"] = qvals
+
+    return out
