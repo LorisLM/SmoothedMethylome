@@ -297,4 +297,11 @@ def plot_volcano(
     return ax
 
 
-
+def plot_anova_volcano(stats: pd.DataFrame):
+    plt.scatter(stats["delta"], np.log10(stats["bf10"]), alpha=0.5)
+    plt.axhline(np.log10(3), color='orange', linestyle='--', label='BF10 = 3')
+    plt.axhline(np.log10(10), color='red', linestyle='--', label='BF10 = 10')
+    plt.xlabel("Delta")
+    plt.ylabel("log10(BF10)")
+    plt.legend()
+    plt.show()

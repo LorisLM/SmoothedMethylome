@@ -1,3 +1,5 @@
+from typing import Iterable
+
 import numpy as np
 import pandas as pd
 
@@ -138,4 +140,86 @@ def run_methylation_ttest(
     qvals[nan_mask] = np.nan
     out["qvalue"] = qvals
 
+    return out
+
+def _bayes_ttest(group1: np.ndarray, group2: np.ndarray) -> float:
+    try:
+        import pingouin as pg  # local import to keep dependency optional
+    except ModuleNotFoundError as err:
+        raise ImportError(
+            "run_bayesian_methylation_test requires the 'pingouin' package.\n"
+            "Install it with:  pip install pingouin"
+        ) from err
+
+    res = pg.ttest(group1, group2, correction=False)
+    return float(res.loc["T-test", "BF10"])
+
+
+def run_bayesian_methylation_test(
+    df1: pd.DataFrame,
+    df2: pd.DataFrame,
+    *,
+    name1: str = "Grp1",
+    name2: str = "Grp2",
+    progress: bool | str = False,
+) -> pd.DataFrame:
+    """Compute per‑CpG Bayes‑factor between two groups of β‑values.
+
+    Parameters
+    ----------
+    df1, df2 : DataFrame
+        CpG × samples matrices (index = CpG IDs). Must share the same dtype
+        and be on the same scale (β‑values).
+    name1, name2 : str
+        Labels used to name the output columns.
+    progress : bool or str
+        If truthy, wrap the loop with `tqdm` progress bar. If a string, that
+        string is used as the *desc* argument for tqdm.
+
+    Returns
+    -------
+    DataFrame
+        Columns: ``<name1>_mean, <name2>_mean, delta, bf10`` with CpG IDs as
+        index.
+    """
+    if df1.index.nlevels != 1 or df2.index.nlevels != 1:
+        raise ValueError("DataFrames must have CpG IDs as a flat index.")
+
+    common = df1.index.intersection(df2.index)
+    if common.empty:
+        raise ValueError("df1 and df2 share no CpG IDs.")
+
+    g1 = df1.loc[common].to_numpy(dtype=float)
+    g2 = df2.loc[common].to_numpy(dtype=float)
+
+    means1 = np.nanmean(g1, axis=1)
+    means2 = np.nanmean(g2, axis=1)
+    delta  = means2 - means1
+
+    iterator: Iterable[int]
+    if progress:
+        try:
+            from tqdm import tqdm
+
+            desc = progress if isinstance(progress, str) else "Compute BF10"
+            iterator = tqdm(range(len(common)), desc=desc)
+        except ModuleNotFoundError:
+            print("[run_bayesian_methylation_test] tqdm not installed – running without progress bar")
+            iterator = range(len(common))
+    else:
+        iterator = range(len(common))
+
+    bf10 = np.empty(len(common), dtype=float)
+    for i in iterator:
+        bf10[i] = _bayes_ttest(g1[i, :], g2[i, :])
+
+    out = pd.DataFrame(
+        {
+            f"{name1}_mean": means1,
+            f"{name2}_mean": means2,
+            "delta": delta,
+            "bf10": bf10,
+        },
+        index=common,
+    )
     return out

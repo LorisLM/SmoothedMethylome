@@ -14,15 +14,6 @@ def read_sdrf(path: str, *,comment_prefix: str = "!",sep: str = "\t",) -> pd.Dat
     return df
 
 def _clean_source_name(name: str) -> str:
-    """Return the *first* token of a Source Name, trimming whitespace.
-
-    Examples
-    --------
-    >>> _clean_source_name("GSM765899 1")
-    'GSM765899'
-    >>> _clean_source_name(" GSM123 ")
-    'GSM123'
-    """
 
     return name.strip().split()[0]
 
