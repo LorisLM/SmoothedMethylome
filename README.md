@@ -33,7 +33,7 @@ Most functions in the SmoothedMethylome package operate on pandas DataFrames str
 | Column Name               | Type    | Description                                                            |
 | ------------------------- | ------- | ---------------------------------------------------------------------- |
 | `Chromosome`              | str/int | Chromosome identifier (e.g., `"1"`, `"2"`, `"X"`, `"Y"`)               |
-| `Position`                | int     | Genomic coordinate of each CpG probe (typically in base pairs)         |
+| `Position`                | int     | Genomic coordinate of each CpG probe                                   |
 | `Reporter ID` / `CpG ID`  | str     | Unique identifier for the probe (e.g., `cg00000029`)                   |
 | `VALUE`                   | float   | Methylation beta value (between 0 and 1) |
 | `pvalue` / `log10_pvalue` | float   | Result from a statistical test (e.g., T-test or ANOVA)                 |
