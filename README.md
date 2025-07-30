@@ -57,7 +57,7 @@ smoothed_df = savgol_smoothing(df, target_column="log10_pvalue", n=11, order=2)
 ```
 
 > [!NOTE]
-> It is recommended to keep the window relatively short (3–11 CpG sites) to reflect biologically realistic co-methylation patterns.
+> It is recommended to keep the window relatively short (3–7 CpG sites) to reflect biologically realistic co-methylation patterns.
 
 ## Use Case
 ```python
