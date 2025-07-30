@@ -143,7 +143,6 @@ def plot_manhattan2(df, snr_filtered):
     Args:
         df (pd.DataFrame): DataFrame containing the genomic data.
         snr_filtered (pd.DataFrame): DataFrame containing 'Predictor' values to highlight.
-        n (int): The total number of data points (used in the plot title).
 
     Returns:
         None: Displays the modified Manhattan plot using matplotlib.pyplot.
